@@ -1,0 +1,8 @@
+spring:
+  profiles:
+    active:
+      - dev
+  datasource:
+    url: jdbc:postgresql://localhost:5444/test_db
+    username: dazai
+    password: dazai
