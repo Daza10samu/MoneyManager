@@ -15,7 +15,9 @@ class OperationService {
         fun entriesToOperationsWithSum(entries: List<Operation>): OperationsWithSum =
             OperationsWithSum(entries.sumOf { it.paymentSum }, entries)
 
-        fun entriesToOperationsSumByDay(entries: List<Operation>, startSum: Double = 0.0, dropPrevious: Boolean = true): List<OperationsSumByDay> {
+        fun entriesToOperationsSumByDay(
+            entries: List<Operation>, startSum: Double = 0.0, dropPrevious: Boolean = true
+        ): List<OperationsSumByDay> {
             val result = mutableListOf<OperationsSumByDay>()
             var date = entries[0].operationDate.toLocalDate()
             var currSum = startSum
@@ -43,13 +45,9 @@ class OperationService {
     val operationDao: OperationDao? = null
 
     fun updateFromString(str: String): List<Operation> {
-        val entries = str.trim('\n')
-            .split("\n")
-            .drop(1)
-            .map { row ->
+        val entries = str.trim('\n').split("\n").drop(1).map { row ->
                 row.split(";").map { it.trim('"').replace(",", ".") }
-            }
-            .map { row ->
+            }.map { row ->
                 val (operationDateStr, operationTimeStr) = row[0].split(" ")
                 val operationDate = LocalDateTime.of(
                     operationDateStr.split(".")[2].toInt(),
@@ -60,9 +58,7 @@ class OperationService {
                     operationTimeStr.split(":")[2].toInt()
                 )
                 val paymentDate = if (row[1].isNotBlank()) LocalDate.of(
-                    row[1].split(".")[2].toInt(),
-                    row[1].split(".")[1].toInt(),
-                    row[1].split(".")[0].toInt()
+                    row[1].split(".")[2].toInt(), row[1].split(".")[1].toInt(), row[1].split(".")[0].toInt()
                 ) else null
 
                 Operation(
@@ -75,7 +71,8 @@ class OperationService {
                     row[6].toDouble(),
                     row[5],
                     if (row[8].isNotBlank()) row[8].toInt() else null,
-                    row[9], row[10],
+                    row[9],
+                    row[10],
                     row[11],
                     row[12].toDouble()
                 )
@@ -91,38 +88,35 @@ class OperationService {
     }
 
     fun getSpending(
-        startDate: LocalDateTime = LocalDateTime.now().minusMonths(1),
-        endDate: LocalDateTime? = null
+        startDate: LocalDateTime? = null, endDate: LocalDateTime? = null, categories: List<String> = listOf()
     ): OperationsWithSum {
-        val entriesWithSum = entriesToOperationsWithSum(
-            operationDao!!.getOperationsBetweenDates(startDate, endDate ?: startDate.plusMonths(1))
-                .filter { it.paymentSum < 0 && it.description != "Перевод между счетами" }
-        )
+        val entriesWithSum = entriesToOperationsWithSum(operationDao!!.getOperationsBetweenDates(
+            startDate ?: LocalDateTime.now().minusMonths(1),
+            endDate ?: (startDate ?: LocalDateTime.now().minusMonths(1)).plusMonths(1),
+            categories = categories
+        ).filter { it.paymentSum < 0 && it.description != "Перевод между счетами" })
         entriesWithSum.sum *= -1
         return entriesWithSum
     }
 
     fun getSpendingByDays(
-        startDate: LocalDateTime = LocalDateTime.now().minusMonths(1),
-        endDate: LocalDateTime? = null
+        startDate: LocalDateTime? = null, endDate: LocalDateTime? = null, categories: List<String> = listOf()
     ): List<OperationsSumByDay> {
-        return entriesToOperationsSumByDay(
-            operationDao!!.getOperationsBetweenDates(startDate, endDate ?: startDate.plusMonths(1))
-                .filter { it.paymentSum < 0 && it.description != "Перевод между счетами" }
-        )
-            .map {
+        return entriesToOperationsSumByDay(operationDao!!.getOperationsBetweenDates(
+            startDate ?: LocalDateTime.now().minusMonths(1),
+            endDate ?: (startDate ?: LocalDateTime.now().minusMonths(1)).plusMonths(1),
+            categories = categories
+        ).filter { it.paymentSum < 0 && it.description != "Перевод между счетами" }).map {
                 it.sum *= -1
                 it
             }
     }
 
     fun getBalanceByDays(
-        startDate: LocalDateTime = LocalDateTime.now().minusMonths(1),
-        endDate: LocalDateTime? = null
+        startDate: LocalDateTime = LocalDateTime.now().minusMonths(1), endDate: LocalDateTime? = null
     ): List<OperationsSumByDay> {
         val entries = operationDao!!.getOperationsBeforeDate(endDate ?: startDate.plusMonths(1)).reversed()
-        return entriesToOperationsSumByDay(
-            entries.filter { it.operationDate >= startDate },
+        return entriesToOperationsSumByDay(entries.filter { it.operationDate >= startDate },
             entries.sumOf { if (it.operationDate >= startDate) 0.0 else it.paymentSum },
             false
         )

@@ -37,68 +37,75 @@ class OperationsController {
     }
 
     @RequestMapping(
-        value = ["/balance"],
-        produces = ["application/json"],
-        method = [RequestMethod.GET]
+        value = ["/balance"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getBalanceByDate(
-        @RequestParam("date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: LocalDateTime?,
+        @RequestParam(
+            "date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: LocalDateTime?,
         @RequestParam("verbose", required = false, defaultValue = "false") verbose: Boolean?,
     ): ResponseEntity<OperationsWithSum>? {
-        val operationsWithSum = service!!.getBalance(date?: LocalDateTime.now())
-        if (verbose != true){
+        val operationsWithSum = service!!.getBalance(date ?: LocalDateTime.now())
+        if (verbose != true) {
             operationsWithSum.operations = listOf()
         }
         return ResponseEntity<OperationsWithSum>(operationsWithSum, HttpStatus.OK)
     }
 
     @RequestMapping(
-        value = ["/spending"],
-        produces = ["application/json"],
-        method = [RequestMethod.GET]
+        value = ["/spending"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getSpending(
-        @RequestParam("start_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
-        @RequestParam("end_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam(
+            "start_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
+        @RequestParam(
+            "end_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam("categories", required = false, defaultValue = "") categories: List<String>?,
         @RequestParam("verbose", required = false, defaultValue = "false") verbose: Boolean?,
-        ): ResponseEntity<OperationsWithSum>? {
-        val operationsWithSum = if (startDate == null) service!!.getSpending() else service!!.getSpending(startDate, endDate)
-        if (verbose != true){
+    ): ResponseEntity<OperationsWithSum>? {
+        val operationsWithSum = service!!.getSpending(startDate, endDate, categories!!)
+        if (verbose != true) {
             operationsWithSum.operations = listOf()
         }
         return ResponseEntity<OperationsWithSum>(operationsWithSum, HttpStatus.OK)
     }
 
     @RequestMapping(
-        value = ["/spendingDays"],
-        produces = ["application/json"],
-        method = [RequestMethod.GET]
+        value = ["/spendingDays"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getSpendingByDays(
-        @RequestParam("start_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
-        @RequestParam("end_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam(
+            "start_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
+        @RequestParam(
+            "end_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam("categories", required = false, defaultValue = "") categories: List<String>?,
     ): ResponseEntity<List<OperationsSumByDay>>? {
-        val spendingByDays = if (startDate == null) service!!.getSpendingByDays() else service!!.getSpendingByDays(startDate, endDate)
+        val spendingByDays = service!!.getSpendingByDays(startDate, endDate, categories!!)
         return ResponseEntity<List<OperationsSumByDay>>(spendingByDays, HttpStatus.OK)
     }
 
     @RequestMapping(
-        value = ["/balanceDays"],
-        produces = ["application/json"],
-        method = [RequestMethod.GET]
+        value = ["/balanceDays"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getBalanceByDays(
-        @RequestParam("start_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
-        @RequestParam("end_date", required = false)@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
+        @RequestParam(
+            "start_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) startDate: LocalDateTime?,
+        @RequestParam(
+            "end_date", required = false
+        ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
     ): ResponseEntity<List<OperationsSumByDay>>? {
-        val balanceByDays = if (startDate == null) service!!.getBalanceByDays() else service!!.getBalanceByDays(startDate, endDate)
+        val balanceByDays =
+            if (startDate == null) service!!.getBalanceByDays() else service!!.getBalanceByDays(startDate, endDate)
         return ResponseEntity<List<OperationsSumByDay>>(balanceByDays, HttpStatus.OK)
     }
 
     @RequestMapping(
-        value = ["/categories"],
-        produces = ["application/json"],
-        method = [RequestMethod.GET]
+        value = ["/categories"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getCategories(): ResponseEntity<List<String>>? {
         return ResponseEntity<List<String>>(service!!.getCategories(), HttpStatus.OK)

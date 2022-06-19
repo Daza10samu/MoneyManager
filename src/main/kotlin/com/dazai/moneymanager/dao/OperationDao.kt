@@ -84,10 +84,16 @@ class OperationDao {
         create!!.batch(queries).execute()
     }
 
-    @Transactional(readOnly = true)
-    fun getOperationsBeforeDate(date: LocalDateTime): List<Operation> {
+    private fun selectByConditions(
+        conditions: org.jooq.Condition,
+        categories: List<String> = listOf()
+    ): List<Operation> {
+        var localConditions = conditions
+        if (categories.isNotEmpty()) {
+            localConditions = conditions.and(OPERATIONS.CATEGORY.`in`(categories))
+        }
         return create!!.selectFrom(OPERATIONS)
-            .where(OPERATIONS.OPERATION_DATE.lessOrEqual(date))
+            .where(localConditions)
             .and(OPERATIONS.PAYMENT_DATE.isNotNull)
             .and(OPERATIONS.STATE.eq("OK"))
             .orderBy(OPERATIONS.OPERATION_DATE.desc())
@@ -95,14 +101,17 @@ class OperationDao {
     }
 
     @Transactional(readOnly = true)
-    fun getOperationsBetweenDates(startDate: LocalDateTime, endDate: LocalDateTime): List<Operation> {
-        return create!!.selectFrom(OPERATIONS)
-            .where(OPERATIONS.OPERATION_DATE.between(startDate, endDate))
-            .and(OPERATIONS.PAYMENT_DATE.isNotNull)
-            .and(OPERATIONS.STATE.eq("OK"))
-            .orderBy(OPERATIONS.OPERATION_DATE.desc())
-            .map { recordToOperation(it) }
-    }
+    fun getOperationsBeforeDate(
+        date: LocalDateTime,
+        categories: List<String> = listOf()
+    ) = selectByConditions(OPERATIONS.OPERATION_DATE.lessOrEqual(date), categories = categories)
+
+    @Transactional(readOnly = true)
+    fun getOperationsBetweenDates(
+        startDate: LocalDateTime,
+        endDate: LocalDateTime,
+        categories: List<String> = listOf()
+    ) = selectByConditions(OPERATIONS.OPERATION_DATE.between(startDate, endDate), categories = categories)
 
     @Transactional(readOnly = true)
     fun getAll(): List<Operation> {
