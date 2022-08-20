@@ -19,10 +19,9 @@ import java.time.LocalDateTime
 
 
 @Controller
-class OperationsController {
-    @Autowired
-    val service: OperationService? = null
-
+class OperationsController @Autowired(
+    val service: OperationService
+) {
     @RequestMapping(
         value = ["/putTinkData"],
         produces = ["application/json"],
