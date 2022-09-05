@@ -10,7 +10,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Component
-class OperationService {
+class OperationService(
+    val operationDao: OperationDao
+) {
     companion object {
         fun entriesToOperationsWithSum(entries: List<Operation>): OperationsWithSum =
             OperationsWithSum(entries.sumOf { it.paymentSum }, entries)
@@ -40,9 +42,6 @@ class OperationService {
             return result.toList()
         }
     }
-
-    @Autowired
-    val operationDao: OperationDao? = null
 
     fun updateFromString(str: String): List<Operation> {
         val entries = str.trim('\n').split("\n").drop(1).map { row ->
@@ -78,19 +77,20 @@ class OperationService {
                 )
             }
 
-        operationDao!!.batchUpsert(entries)
+        operationDao.batchUpsert(entries)
 
-        return operationDao!!.getAll()
+        return operationDao.getAll()
     }
 
     fun getBalance(date: LocalDateTime = LocalDateTime.now()): OperationsWithSum {
-        return entriesToOperationsWithSum(operationDao!!.getOperationsBeforeDate(date))
+        return entriesToOperationsWithSum(operationDao.getOperationsBeforeDate(date))
     }
 
     fun getSpending(
         startDate: LocalDateTime? = null, endDate: LocalDateTime? = null, categories: List<String> = listOf()
     ): OperationsWithSum {
-        val entriesWithSum = entriesToOperationsWithSum(operationDao!!.getOperationsBetweenDates(
+        val entriesWithSum = entriesToOperationsWithSum(
+            operationDao.getOperationsBetweenDates(
             startDate ?: LocalDateTime.now().minusMonths(1),
             endDate ?: (startDate ?: LocalDateTime.now().minusMonths(1)).plusMonths(1),
             categories = categories
@@ -102,7 +102,8 @@ class OperationService {
     fun getSpendingByDays(
         startDate: LocalDateTime? = null, endDate: LocalDateTime? = null, categories: List<String> = listOf()
     ): List<OperationsSumByDay> {
-        return entriesToOperationsSumByDay(operationDao!!.getOperationsBetweenDates(
+        return entriesToOperationsSumByDay(
+            operationDao.getOperationsBetweenDates(
             startDate ?: LocalDateTime.now().minusMonths(1),
             endDate ?: (startDate ?: LocalDateTime.now().minusMonths(1)).plusMonths(1),
             categories = categories
@@ -115,7 +116,7 @@ class OperationService {
     fun getBalanceByDays(
         startDate: LocalDateTime = LocalDateTime.now().minusMonths(1), endDate: LocalDateTime? = null
     ): List<OperationsSumByDay> {
-        val entries = operationDao!!.getOperationsBeforeDate(endDate ?: startDate.plusMonths(1)).reversed()
+        val entries = operationDao.getOperationsBeforeDate(endDate ?: startDate.plusMonths(1)).reversed()
         return entriesToOperationsSumByDay(entries.filter { it.operationDate >= startDate },
             entries.sumOf { if (it.operationDate >= startDate) 0.0 else it.paymentSum },
             false
@@ -123,6 +124,6 @@ class OperationService {
     }
 
     fun getCategories(): List<String> {
-        return operationDao!!.getCategories()
+        return operationDao.getCategories()
     }
 }

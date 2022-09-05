@@ -8,18 +8,19 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 
 @Configuration
 @Profile("dev", "test", "prod", "debug")
-class TestDatabase {
+class TestDatabase(
     @Value("#{systemEnvironment['DB_HOST']}")
-    private val dbHost: String? = null
+    private val dbHost: String,
 
     @Value("#{systemEnvironment['DB_NAME']}")
-    private val dbName: String? = null
+    private val dbName: String,
 
     @Value("#{systemEnvironment['DB_USER_NAME']}")
-    private val userName: String? = null
+    private val userName: String,
 
     @Value("#{systemEnvironment['DB_PASSWORD']}")
-    private val password: String? = null
+    private val password: String
+) {
 
     @Bean
     fun getDataSource(): DriverManagerDataSource {

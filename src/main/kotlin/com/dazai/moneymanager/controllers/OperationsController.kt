@@ -19,10 +19,9 @@ import java.time.LocalDateTime
 
 
 @Controller
-class OperationsController {
-    @Autowired
-    val service: OperationService? = null
-
+class OperationsController (
+    val service: OperationService
+) {
     @RequestMapping(
         value = ["/putTinkData"],
         produces = ["application/json"],
@@ -32,7 +31,7 @@ class OperationsController {
     fun requestPut(
         @RequestPart("file") file: MultipartFile?
     ): ResponseEntity<List<Operation>>? {
-        val entries = service!!.updateFromString(file!!.bytes.toString(charset = Charset.forName("cp1251")))
+        val entries = service.updateFromString(file!!.bytes.toString(charset = Charset.forName("cp1251")))
         return ResponseEntity<List<Operation>>(entries, HttpStatus.OK)
     }
 
@@ -45,7 +44,7 @@ class OperationsController {
         ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) date: LocalDateTime?,
         @RequestParam("verbose", required = false, defaultValue = "false") verbose: Boolean?,
     ): ResponseEntity<OperationsWithSum>? {
-        val operationsWithSum = service!!.getBalance(date ?: LocalDateTime.now())
+        val operationsWithSum = service.getBalance(date ?: LocalDateTime.now())
         if (verbose != true) {
             operationsWithSum.operations = listOf()
         }
@@ -65,7 +64,7 @@ class OperationsController {
         @RequestParam("categories", required = false, defaultValue = "") categories: List<String>?,
         @RequestParam("verbose", required = false, defaultValue = "false") verbose: Boolean?,
     ): ResponseEntity<OperationsWithSum>? {
-        val operationsWithSum = service!!.getSpending(startDate, endDate, categories!!)
+        val operationsWithSum = service.getSpending(startDate, endDate, categories!!)
         if (verbose != true) {
             operationsWithSum.operations = listOf()
         }
@@ -84,7 +83,7 @@ class OperationsController {
         ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
         @RequestParam("categories", required = false, defaultValue = "") categories: List<String>?,
     ): ResponseEntity<List<OperationsSumByDay>>? {
-        val spendingByDays = service!!.getSpendingByDays(startDate, endDate, categories!!)
+        val spendingByDays = service.getSpendingByDays(startDate, endDate, categories!!)
         return ResponseEntity<List<OperationsSumByDay>>(spendingByDays, HttpStatus.OK)
     }
 
@@ -100,7 +99,7 @@ class OperationsController {
         ) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) endDate: LocalDateTime?,
     ): ResponseEntity<List<OperationsSumByDay>>? {
         val balanceByDays =
-            if (startDate == null) service!!.getBalanceByDays() else service!!.getBalanceByDays(startDate, endDate)
+            if (startDate == null) service.getBalanceByDays() else service.getBalanceByDays(startDate, endDate)
         return ResponseEntity<List<OperationsSumByDay>>(balanceByDays, HttpStatus.OK)
     }
 
@@ -108,6 +107,6 @@ class OperationsController {
         value = ["/categories"], produces = ["application/json"], method = [RequestMethod.GET]
     )
     fun getCategories(): ResponseEntity<List<String>>? {
-        return ResponseEntity<List<String>>(service!!.getCategories(), HttpStatus.OK)
+        return ResponseEntity<List<String>>(service.getCategories(), HttpStatus.OK)
     }
 }
