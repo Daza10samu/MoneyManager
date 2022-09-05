@@ -4,13 +4,14 @@ import com.dazai.moneymanager.models.Operation
 import com.dazai.moneymanager.tables.Operations.OPERATIONS
 import com.dazai.moneymanager.tables.records.OperationsRecord
 import org.jooq.DSLContext
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Component
-class OperationDao {
+class OperationDao(
+    private var create: DSLContext
+) {
     companion object {
         fun recordToOperation(record: OperationsRecord): Operation {
             return Operation(
@@ -31,13 +32,10 @@ class OperationDao {
         }
     }
 
-    @Autowired
-    private var create: DSLContext? = null
-
     @Transactional
     fun batchUpsert(entries: Collection<Operation>) {
         val queries = entries.map { entry ->
-            create!!.insertInto(
+            create.insertInto(
                 OPERATIONS,
                 OPERATIONS.OPERATION_DATE,
                 OPERATIONS.PAYMENT_DATE,
@@ -81,7 +79,7 @@ class OperationDao {
                 .set(OPERATIONS.BONUS, entry.bonus)
         }
 
-        create!!.batch(queries).execute()
+        create.batch(queries).execute()
     }
 
     private fun selectByConditions(
@@ -92,7 +90,7 @@ class OperationDao {
         if (categories.isNotEmpty()) {
             localConditions = conditions.and(OPERATIONS.CATEGORY.`in`(categories))
         }
-        return create!!.selectFrom(OPERATIONS)
+        return create.selectFrom(OPERATIONS)
             .where(localConditions)
             .and(OPERATIONS.PAYMENT_DATE.isNotNull)
             .and(OPERATIONS.STATE.eq("OK"))
@@ -115,14 +113,14 @@ class OperationDao {
 
     @Transactional(readOnly = true)
     fun getAll(): List<Operation> {
-        return create!!.selectFrom(OPERATIONS)
+        return create.selectFrom(OPERATIONS)
             .orderBy(OPERATIONS.OPERATION_DATE.desc())
             .map { recordToOperation(it) }
     }
 
     @Transactional(readOnly = true)
     fun getCategories(): List<String> {
-        return create!!.selectDistinct(OPERATIONS.CATEGORY)
+        return create.selectDistinct(OPERATIONS.CATEGORY)
             .from(OPERATIONS)
             .where(OPERATIONS.CATEGORY.notEqual(""))
             .map { it.value1() }
